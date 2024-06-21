@@ -1,4 +1,6 @@
 import { defineStore } from "pinia";
+import { computed } from "vue";
+
 const audio = new Audio("/media/Alarm_Clock.mp3");
 
 export const useTemporizadorStore = defineStore("temporizador", {
@@ -6,14 +8,14 @@ export const useTemporizadorStore = defineStore("temporizador", {
     temporizadorActivo: 1,
     temporizadores: [
       {
-        minutos: "00",
-        segundos: "00",
+        minutos: 0,
+        segundos: 0,
         intervalo: null,
         estado: "detenido",
       },
       {
-        minutos: "00",
-        segundos: "00",
+        minutos: 0,
+        segundos: 0,
         intervalo: null,
         estado: "detenido",
       },
@@ -31,6 +33,13 @@ export const useTemporizadorStore = defineStore("temporizador", {
 
       if (temporizador.estado !== "iniciado") {
         temporizador.estado = "iniciado";
+
+        const formatTiempo = (temporizador) => {
+          const minutos = String(temporizador.minutos).padStart(2, "0");
+          const segundos = String(temporizador.segundos).padStart(2, "0");
+          return `${minutos}:${segundos}`;
+        };
+
         temporizador.intervalo = setInterval(() => {
           if (temporizador.segundos === 0 && temporizador.minutos === 0) {
             clearInterval(temporizador.intervalo);
@@ -42,6 +51,11 @@ export const useTemporizadorStore = defineStore("temporizador", {
           } else {
             temporizador.segundos--;
           }
+
+          const temporizadorFormateado = computed(() =>
+            formatTiempo(this.temporizadores[temporizadorId - 1])
+          );
+          document.title = "Alarma: " + temporizadorFormateado.value;
         }, 1000);
       }
     },
@@ -57,9 +71,11 @@ export const useTemporizadorStore = defineStore("temporizador", {
         this.iniciar(temporizadorId, minutos, segundos);
       }
     },
-    reiniciar(temporizadorId) {
+    reiniciar(temporizadorId, minutos, segundos) {
       const temporizador = this.temporizadores[temporizadorId - 1];
-      this.iniciar(temporizadorId, temporizador.minutos, temporizador.segundos);
+      clearInterval(temporizador.intervalo);
+      temporizador.estado = "detenido";
+      this.iniciar(temporizadorId, minutos, segundos);
     },
   },
 });
